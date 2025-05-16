@@ -33,8 +33,8 @@ export default function App() {
     <div className="flex flex-col items-center gap-6">
       <Menu currentView={view} onSelect={setView} />
 
-      {view === "conquest" && <PoolWar fid={session.user.fid} />}
-      {view === "leaderboard" && <Leaderboard fid={session.user.fid} />}
+      {view === "conquest" && <PoolWar fid={session?.user?.fid || 0} />}
+      {view === "leaderboard" && <Leaderboard fid={session?.user?.fid || 0} />}
     </div>
   );
 }

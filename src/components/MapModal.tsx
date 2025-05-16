@@ -30,6 +30,14 @@ type Props = {
   fid?: number;
 };
 
+async function getUsername(fid: number) {
+  const res = await fetch(`/api/user?fid=${fid}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  console.log("data ", data.username);
+  return data.username ? `@${data.username}` : null;
+}
+
 export default function MapModal({ open, onClose, id, name, fid }: Props) {
   const { address, isConnected } = useAccount();
   const { sendTransaction } = useSendTransaction();
@@ -40,19 +48,22 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
   const [stakeAmount, setStakeAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "waiting" | "success" | "error">("idle");
   const [confirmAction, setConfirmAction] = useState<"stake" | "unstake" | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   const { isSuccess, isError, isLoading } = useWaitForTransactionReceipt({
     hash: txHash,
   });
 
+  console.log("fid ", Number(fid));
+
   const registerWallet = async () => {
     if (!fid || !address) return;
-  
+    console.log("username 2", username);
     try {
       await fetch("/api/link-wallet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: address, fid }),
+        body: JSON.stringify({ wallet: address, fid, username }),
       });
     } catch (err) {
       console.error("Erro ao registrar wallet com fid:", err);
@@ -114,9 +125,11 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
         data,
       },
       {
-        onSuccess: (hash) => {
+        onSuccess: async (hash) => {
           setTxHash(hash);
           setStakeAmount("");
+          const username = await getUsername(Number(fid));
+          setUsername(username);
           registerWallet();
         },
         onError: () => setStatus("error"),
