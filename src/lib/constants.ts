@@ -11,4 +11,5 @@ export const APP_BUTTON_TEXT = process.env.NEXT_PUBLIC_FRAME_BUTTON_TEXT;
 export const APP_WEBHOOK_URL = process.env.NEYNAR_API_KEY && process.env.NEYNAR_CLIENT_ID 
     ? `https://api.neynar.com/f/app/${process.env.NEYNAR_CLIENT_ID}/event`
     : `${APP_URL}/api/webhook`;
-export const stakingContractAddress = "0xA92F7d9057be3AE44FEBd2892743fc6b85EaA00f";
+export const stakingContractAddress = "0x2d6D44AF912d63b21d5B905E7525a26229E9EB34";
+export const NFTContractAddress = "0x0442ce158589962255b23E75797996A0dc248b61";

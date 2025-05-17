@@ -2,38 +2,95 @@
 
 import { useEffect, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
-import { stakingContractAddress } from "~/lib/constants";
-import { abi } from "~/lib/abi";
-import { writeContract, readContract } from "@wagmi/core";
+import { writeContract, readContract, waitForTransactionReceipt } from "@wagmi/core";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { config } from "~/components/providers/WagmiProvider";
+import { stakingContractAddress, NFTContractAddress } from "~/lib/constants";
+import { abi } from "~/lib/abi";
+import { abi as monarchsAbi } from "~/lib/abiMonarchs";
+import React from "react";
 
 const guilds = [
   {
     name: "House of Moyaki",
     id: "House of Moyaki",
     description: "Masters of the deep waters and swift strikes.",
-    icon: "/moyaki.png",
+    icon: "/house_of_moyaki.png",
   },
   {
     name: "House of Chog",
     id: "House of Chog",
     description: "Resilient defenders of the emerald forest.",
-    icon: "/chogwood.png",
+    icon: "/house_of_chog.png",
   },
   {
     name: "House of Molandak",
     id: "House of Molandak",
     description: "Strategists of the great plains and storm riders.",
-    icon: "/molandak.png",
+    icon: "/house_of_molandak.png",
   },
 ];
 
+const mintFunctionByGuild: Record<string, string> = {
+  "House of Moyaki": "mintMoyaki",
+  "House of Chog": "mintChog",
+  "House of Molandak": "mintMolandak",
+};
+
+function Modal({ open, onClose, onConfirm, title, description, confirmText = "Confirmar", cancelText = "Cancelar" }: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  description: string;
+  confirmText?: string;
+  cancelText?: string;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+      <div className="bg-zinc-900 p-6 rounded-lg shadow-lg max-w-sm w-full">
+        <h2 className="text-xl font-bold mb-2 text-purple-300">{title}</h2>
+        <p className="mb-4 text-zinc-300">{description}</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 bg-zinc-700 rounded hover:bg-zinc-600 text-zinc-200">{cancelText}</button>
+          <button onClick={onConfirm} className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 text-white font-semibold">{confirmText}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Guild({ onJoinGuild }: { onJoinGuild?: () => void }) {
   const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [selected, setSelected] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { data: walletClient } = useWalletClient();
+  const [currentGuildIndex, setCurrentGuildIndex] = useState(0);
+  const [mintStatus, setMintStatus] = useState<string | null>(null);
+  const [mintError, setMintError] = useState<string | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showMintModal, setShowMintModal] = useState(false);
+  const [pendingGuildId, setPendingGuildId] = useState<string | null>(null);
+  const [hasMinted, setHasMinted] = useState(false);
+
+  // Função para checar se já mintou
+  const checkMinted = async (userAddress?: string) => {
+    const addr = userAddress || address;
+    if (!addr) return;
+    try {
+      const ownedTokens = await readContract(config, {
+        address: NFTContractAddress,
+        abi: monarchsAbi,
+        functionName: "getOwnedTokenIds",
+        args: [addr],
+      });
+      setHasMinted(Array.isArray(ownedTokens) && ownedTokens.length > 0);
+    } catch (err) {
+      setHasMinted(false);
+    }
+  };
 
   useEffect(() => {
     const checkGuild = async () => {
@@ -56,23 +113,66 @@ export default function Guild({ onJoinGuild }: { onJoinGuild?: () => void }) {
     checkGuild();
   }, [address]);
 
-  const handleJoin = async (guildId: string) => {
-    if (!address || !walletClient) return;
+  useEffect(() => {
+    checkMinted();
+  }, [address, mintStatus]);
 
+  const handleOpenJoinModal = (guildId: string) => {
+    setPendingGuildId(guildId);
+    setShowJoinModal(true);
+  };
+
+  const handleConfirmJoin = async () => {
+    if (!pendingGuildId) return;
+    setShowJoinModal(false);
+    await handleJoin(pendingGuildId, false);
+    setShowMintModal(true);
+  };
+
+  const handleConfirmMint = async () => {
+    console.log("Botão de Mintar NFT clicado, pendingGuildId:", pendingGuildId);
+    if (!pendingGuildId) return;
+    setShowMintModal(false);
+    await handleJoin(pendingGuildId, true);
+    setPendingGuildId(null);
+  };
+
+  const handleJoin = async (guildId: string, mintNFT = true) => {
+    if (!address || !walletClient) {
+      return;
+    }
     setLoading(true);
+    setMintStatus(null);
+    setMintError(null);
     try {
-      await writeContract(config, {
-        address: stakingContractAddress,
-        abi,
-        functionName: "joinGuild",
-        args: [guildId],
+      if (!mintNFT) {
+        await writeContract(config, {
+          address: stakingContractAddress,
+          abi,
+          functionName: "joinGuild",
+          args: [guildId],
+          account: address,
+        });
+        setSelected(guildId);
+        setJoined(true);
+        if (onJoinGuild) onJoinGuild();
+        return;
+      }
+      setMintStatus("Mintando NFT...");
+      const mintFunction = mintFunctionByGuild[guildId];
+      if (!mintFunction) throw new Error("Função de mint não encontrada para a guilda selecionada.");
+      const tx = await writeContract(config, {
+        address: NFTContractAddress,
+        abi: monarchsAbi,
+        functionName: mintFunction,
+        args: [address],
         account: address,
       });
-      setSelected(guildId);
-      setJoined(true);
-      if (onJoinGuild) onJoinGuild();
-    } catch (err) {
-      console.error("Failed to join guild:", err);
+      await waitForTransactionReceipt(config, { hash: tx });
+      await checkMinted();
+      setMintStatus("✅ NFT mintado com sucesso!");
+    } catch (err: any) {
+      setMintError(err?.message || "Erro ao mintar o NFT.");
     } finally {
       setLoading(false);
     }
@@ -80,33 +180,85 @@ export default function Guild({ onJoinGuild }: { onJoinGuild?: () => void }) {
 
   const visibleGuilds = joined && selected
     ? guilds.filter(g => g.id === selected)
-    : guilds;
+    : [guilds[currentGuildIndex]];
+
+  const goLeft = () => setCurrentGuildIndex((prev) => (prev === 0 ? guilds.length - 1 : prev - 1));
+  const goRight = () => setCurrentGuildIndex((prev) => (prev === guilds.length - 1 ? 0 : prev + 1));
 
   return (
     <div className="p-8 max-w-xl mx-auto text-white">
+      <Modal
+        open={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onConfirm={handleConfirmJoin}
+        title="Entrar na Guilda?"
+        description={`Você tem certeza que deseja entrar na guilda "${pendingGuildId ?? ''}"? Essa ação não pode ser desfeita.`}
+        confirmText="Entrar"
+        cancelText="Cancelar"
+      />
+      <Modal
+        open={showMintModal}
+        onClose={() => setShowMintModal(false)}
+        onConfirm={handleConfirmMint}
+        title="Mintar NFT da Guilda?"
+        description={`Deseja mintar o NFT da guilda "${pendingGuildId ?? ''}" agora?`}
+        confirmText="Mintar NFT"
+        cancelText="Agora não"
+      />
       <h1 className="text-3xl font-bold text-center text-purple-300 mb-8">
         {joined ? "Your Guild" : "First, choose your Guild!"}
       </h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {visibleGuilds.map((guild) => (
-          <button
-            key={guild.id}
-            onClick={() => handleJoin(guild.id)}
-            disabled={joined || loading}
-            className={`bg-zinc-800 hover:bg-zinc-700 transition rounded p-4 border-2 ${
-              selected === guild.id ? "border-purple-500" : "border-zinc-700"
-            }`}
-          >
-            <img
-              src={guild.icon}
-              alt={guild.name}
-              className="w-16 h-16 mb-4 mx-auto rounded"
-            />
-            <h2 className="text-xl font-semibold text-center mb-2">{guild.name}</h2>
-            <p className="text-sm text-zinc-400 text-center">{guild.description}</p>
+      {mintStatus && (
+        <p className="mt-4 text-center text-blue-400 animate-pulse">{mintStatus}</p>
+      )}
+      {mintError && (
+        <p className="mt-4 text-center text-red-500 font-semibold">{mintError}</p>
+      )}
+      <div className="flex items-center justify-center gap-4">
+        {!joined && (
+          <button onClick={goLeft} className="p-2 text-purple-300 hover:text-purple-500">
+            <FaChevronLeft size={32} />
           </button>
-        ))}
+        )}
+        <div className="flex-1">
+          {visibleGuilds.map((guild) => (
+            <button
+              key={guild.id}
+              onClick={() => handleOpenJoinModal(guild.id)}
+              disabled={joined || loading}
+              className={`bg-zinc-800 hover:bg-zinc-700 transition rounded p-4 border-2 w-full ${
+                selected === guild.id ? "border-purple-500" : "border-zinc-700"
+              }`}
+            >
+              <img
+                src={guild.icon}
+                alt={guild.name}
+                className="w-15 h-25 mb-4 mx-auto rounded"
+              />
+              <h2 className="text-xl font-semibold text-center mb-2">{guild.name}</h2>
+              <p className="text-sm text-zinc-400 text-center">{guild.description}</p>
+            </button>
+          ))}
+        </div>
+        {!joined && (
+          <button onClick={goRight} className="p-2 text-purple-300 hover:text-purple-500">
+            <FaChevronRight size={32} />
+          </button>
+        )}
       </div>
+      {joined && selected && !hasMinted && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => {
+              setPendingGuildId(selected);
+              setShowMintModal(true);
+            }}
+            className="px-6 py-2 bg-purple-600 rounded hover:bg-purple-700 text-white font-semibold shadow"
+          >
+            Mint Guild NFT
+          </button>
+        </div>
+      )}
       {joined && selected && (
         <p className="mt-6 text-center text-green-400">
           You have joined <strong>{selected}</strong>! Welcome.

@@ -2,6 +2,30 @@ export const abi = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "territoryId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getAllGuildStakes",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "guild",
         "type": "string"

@@ -283,22 +283,7 @@ async function loginToVercel() {
   console.log('\nNote: you may need to cancel this script with ctrl+c and run it again if creating a new vercel account');
   
   // Start the login process
-  const child = spawn('vercel', ['login'], {
-    stdio: 'inherit'
-  });
 
-  // Wait for the login process to complete
-  await new Promise((resolve, reject) => {
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        // Don't reject here, as the process might exit with non-zero
-        // during the browser auth flow
-        resolve();
-      }
-    });
-  });
 
   // After the browser flow completes, verify we're actually logged in
   // Keep checking for up to 5 minutes (increased timeout for new account setup)

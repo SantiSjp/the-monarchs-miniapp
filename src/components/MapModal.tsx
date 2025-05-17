@@ -180,7 +180,15 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
       <Dialog open={open} onClose={onClose} className="relative z-50">
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center">
-          <Dialog.Panel className="bg-zinc-900 p-6 rounded-lg text-white w-full max-w-sm shadow-xl border border-purple-500">
+          <Dialog.Panel className="bg-zinc-900 p-6 rounded-lg text-white w-full max-w-sm shadow-xl border border-purple-500 relative">
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute top-2 right-2 text-purple-300 hover:text-white text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-purple-500 rounded"
+              type="button"
+            >
+              ×
+            </button>
             <Dialog.Title className="text-lg font-bold mb-2">🌍 {name}</Dialog.Title>
 
             <p className="text-sm mb-1">Total Staked: {Number(totalStake) / 1e18} MON</p>
@@ -193,7 +201,7 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
             <input
               type="number"
               min="0"
-              placeholder="Valor em MON"
+              placeholder="Amount in MON"
               value={stakeAmount}
               onChange={(e) => setStakeAmount(e.target.value)}
               className="w-full p-2 rounded bg-zinc-800 text-white border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3"
@@ -223,9 +231,14 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
               </div>
             )}
 
-            {status === "waiting" && <p className="text-white text-sm mt-2 text-center">⏳ Aguardando confirmação...</p>}
-            {status === "success" && <p className="text-green-400 text-sm mt-2 text-center">✅ Transação confirmada!</p>}
-            {status === "error" && <p className="text-red-400 text-sm mt-2 text-center">❌ Erro ao enviar transação.</p>}
+            {status === "waiting" && (
+              <div className="flex items-center justify-center text-white text-sm mt-2 text-center gap-2">
+                <Spinner />
+                <span>⏳ Waiting for confirmation...</span>
+              </div>
+            )}
+            {status === "success" && <p className="text-green-400 text-sm mt-2 text-center">✅ Transaction confirmed!</p>}
+            {status === "error" && <p className="text-red-400 text-sm mt-2 text-center">❌ Error sending transaction.</p>}
           </Dialog.Panel>
         </div>
       </Dialog>
@@ -236,10 +249,10 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
           <div className="fixed inset-0 flex items-center justify-center">
             <Dialog.Panel className="bg-zinc-800 p-6 rounded-lg text-white w-full max-w-xs border border-purple-500">
               <Dialog.Title className="text-lg font-semibold mb-4">
-                Confirmar {confirmAction === "stake" ? "Stake" : "Unstake"}
+                Confirm {confirmAction === "stake" ? "Stake" : "Unstake"}
               </Dialog.Title>
               <p className="text-sm text-zinc-300 mb-4 text-center">
-                Tem certeza que deseja {confirmAction === "stake" ? `fazer stake de ${stakeAmount} MON` : "realizar unstake?"}
+                Are you sure you want to {confirmAction === "stake" ? `stake ${stakeAmount} MON` : "unstake?"}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -249,13 +262,13 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
                   }}
                   className="w-full"
                 >
-                  Confirmar
+                  Confirm
                 </Button>
                 <Button
                   onClick={() => setConfirmAction(null)}
                   className="w-full bg-zinc-700 hover:bg-zinc-600"
                 >
-                  Cancelar
+                  Cancel
                 </Button>
               </div>
             </Dialog.Panel>
