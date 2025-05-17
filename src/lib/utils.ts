@@ -120,7 +120,11 @@ export async function getFarcasterMetadata(): Promise<FrameManifest> {
   }
 
   return {
-    accountAssociation,
+    accountAssociation: {
+      header: "eyJmaWQiOjEwNzE3NzMsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg3MWE0OTVBZDBkOTQ0MDNhODQ4YjRDNzcwRGM3NzFDNURBNURhNWJEIn0",
+      payload: "eyJkb21haW4iOiJwb29sLXdhci52ZXJjZWwuYXBwIn0",
+      signature: "MHgzYWFkMjQ3MWViY2VmM2Y5YjI0ZGM5ZjRkNjFmYjEzNTgyMWJiMWY0ZTNjOTUzMWFhMGU3NGQ5NmMzMzExNDFjMDI2Yjg3MWUwNDg5NDI5YTk1OGYzZDQ5OTQ2MmY1YzYzOWY0MjFhZWQzZTMwNDc1NWYwYjM3Yzg2MmFiNDNhMTFj"
+    },
     frame: {
       version: "1",
       name: APP_NAME ?? "Frames v2 Demo",
