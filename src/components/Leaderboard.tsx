@@ -7,87 +7,45 @@ import { readContract } from "@wagmi/core";
 import { config } from "~/components/providers/WagmiProvider";
 
 const territories = [
-  { id: 0, name: "Moyaki Isles" },
-  { id: 1, name: "Chogwood" },
-  { id: 2, name: "Monad Keep" },
-  { id: 3, name: "Molandak Plains" },
+  { id: 0, name: "Moyaki Isles", icon: "/moyaki.png" },
+  { id: 1, name: "Chogwood", icon: "/chogwood.png" },
+  { id: 2, name: "Monad Keep", icon: "/monad-keep.png" },
+  { id: 3, name: "Molandak Plains", icon: "/molandak.png" },
 ];
-
-type Props = {
-  fid?: number;
-};
 
 type LeaderboardEntry = {
   name: string;
-  owner: string;
+  owner: string; // agora é o nome da guilda
   stake: number;
 };
 
-type WalletLink = {
-  wallet: string;
-  fid: number;
-  username: string;
-};
-
-async function fetchWalletUser(wallet: string): Promise<WalletLink | undefined> {
-  try {
-    const res = await fetch(`/api/link-wallet?wallet=${encodeURIComponent(wallet)}`);
-    
-    if (!res.ok) {
-      console.error("Server responded with error:", res.status);
-      return undefined;
-    }
-
-    const data = await res.json();
-    return data.data as WalletLink || undefined;
-  } catch (error) {
-    console.error("Error fetching wallet user:", error);
-    return undefined;
-  }
-}
-
-export default function Leaderboard({ fid }: Props) {
+export default function Leaderboard() {
   const [data, setData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const walletUserCache: Record<string, WalletLink | undefined> = {};
-
     const fetchData = async () => {
       const result = await Promise.all(
         territories.map(async ({ id, name }) => {
           try {
-            const [rawOwner, rawStake] = await Promise.all([
-              readContract(config, {
-                address: stakingContractAddress,
-                abi,
-                functionName: "getTerritoryOwner",
-                args: [id],
-              }),
-              readContract(config, {
-                address: stakingContractAddress,
-                abi,
-                functionName: "getTotalStake",
-                args: [id],
-              }),
-            ]);
+            const guildName = await readContract(config, {
+              address: stakingContractAddress,
+              abi,
+              functionName: "getTerritoryOwner",
+              args: [id],
+            });
+            
+            const rawStake = await readContract(config, {
+              address: stakingContractAddress,
+              abi,
+              functionName: "getGuildStake",
+              args: [guildName as string, id],
+            });
 
-            const owner = (rawOwner as string).toLowerCase();
             const stake = Number(rawStake) / 1e18;
+            const owner = guildName as string;
 
-            let linkedFid: WalletLink | undefined = undefined;
-            if (owner !== "0x0000000000000000000000000000000000000000") {
-              if (walletUserCache[owner] === undefined) {
-                walletUserCache[owner] = await fetchWalletUser(owner);
-              }
-              linkedFid = walletUserCache[owner];
-            }
-
-            return {
-              name,
-              owner: linkedFid?.username || owner,
-              stake,
-            };
+            return { name, owner, stake };
           } catch (err) {
             console.error(`Erro ao carregar dados do território ${name}:`, err);
             return {
@@ -115,13 +73,23 @@ export default function Leaderboard({ fid }: Props) {
         </div>
       ) : (
         <ul className="space-y-4">
-          {data.map(({ name, owner, stake }) => (
-            <li key={name} className="bg-zinc-800 p-4 rounded">
-              <h3 className="text-lg font-semibold">🌍 {name}</h3>
-              <p className="text-sm text-purple-300">Owner: {owner === "0x0000000000000000000000000000000000000000" ? "Unclaimed" : owner}</p>
-              <p className="text-sm text-purple-400">Total Staked: {stake} MON</p>
-            </li>
-          ))}
+          {data.map(({ name, owner, stake }) => {
+            const territory = territories.find(t => t.name === name);
+            return (
+              <li key={name} className="bg-zinc-800 p-4 rounded">
+                {territory && (
+                  <img
+                    src={territory.icon}
+                    alt={name}
+                    className="inline-block w-8 h-8 mr-2 align-middle rounded"
+                  />
+                )}
+                <h3 className="text-lg font-semibold inline align-middle">{name}</h3>
+                <p className="text-sm text-purple-300">Guild: {owner || "Unclaimed"}</p>
+                <p className="text-sm text-purple-400">Total Staked: {stake} MON</p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

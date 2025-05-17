@@ -44,6 +44,8 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [totalStake, setTotalStake] = useState<bigint>(0n);
   const [userStake, setUserStake] = useState<bigint>(0n);
+  const [userGuildStake, setUserGuildStake] = useState<bigint>(0n);
+  const [userGuild, setUserGuild] = useState<string | null>(null);
   const [userBalance, setUserBalance] = useState<bigint>(0n);
   const [stakeAmount, setStakeAmount] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "waiting" | "success" | "error">("idle");
@@ -80,28 +82,45 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
 
   const refresh = async () => {
     try {
-      const [total] = await Promise.all([
-        readContract(config, {
-          address: stakingContractAddress,
-          abi,
-          functionName: "getTotalStake",
-          args: [id],
-        }),
-      ]);
+      const total = await readContract(config, {
+        address: stakingContractAddress,
+        abi,
+        functionName: "totalStakePerTerritory",
+        args: [id],
+      });
+      
       setTotalStake(BigInt(total as string));
 
       if (isConnected && address) {
-        const [stake, balance] = await Promise.all([
+        const [stake, balance, guildName] = await Promise.all([
           readContract(config, {
             address: stakingContractAddress,
             abi,
-            functionName: "getStake",
+            functionName: "getUserStake",
             args: [address, id],
           }),
           getBalance(config, { address }),
+          readContract(config, {
+            address: stakingContractAddress,
+            abi,
+            functionName: "userGuild",
+            args: [address],
+          }),
         ]);
+
         setUserStake(BigInt(stake as string));
         setUserBalance(BigInt(balance.value));
+        setUserGuild(guildName as string);
+
+        if (guildName && guildName !== "") {
+          const guildStake = await readContract(config, {
+            address: stakingContractAddress,
+            abi,
+            functionName: "getGuildStake",
+            args: [guildName as string, id],
+          });
+          setUserGuildStake(BigInt(guildStake as string));
+        }
       }
     } catch (err) {
       console.error("Erro ao buscar dados do território ou saldo:", err);
@@ -167,6 +186,9 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
             <p className="text-sm mb-1">Total Staked: {Number(totalStake) / 1e18} MON</p>
             <p className="text-sm mb-1 text-purple-300">Your Balance: {Number(userBalance) / 1e18} MON</p>
             <p className="text-sm mb-1 text-purple-400">Your Stake: {Number(userStake) / 1e18} MON</p>
+            {userGuild && (
+              <p className="text-sm mb-1 text-purple-500">Your Guild Stake: {Number(userGuildStake) / 1e18} MON</p>
+            )}
 
             <input
               type="number"
