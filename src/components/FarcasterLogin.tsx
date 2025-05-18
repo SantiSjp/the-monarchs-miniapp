@@ -32,9 +32,9 @@ export default function FarcasterLogin() {
       });
     } catch (e) {
       if (e instanceof SignInCore.RejectedByUser) {
-        setSignInFailure("Login cancelado");
+        setSignInFailure("Login cancelled");
       } else {
-        setSignInFailure("Erro ao fazer login");
+        setSignInFailure("Error signing in");
       }
     } finally {
       setSigningIn(false);
@@ -53,13 +53,13 @@ export default function FarcasterLogin() {
     <div className="flex flex-col items-center gap-3">
       {status !== "authenticated" ? (
         <Button onClick={handleSignIn} disabled={signingIn}>
-          {signingIn ? "Conectando..." : "Entrar com Farcaster"}
+          {signingIn ? "Connecting..." : "Sign in with Farcaster"}
         </Button>
       ) : (
         <>
-          <p className="text-sm text-white">🎉 Logado como {session.user?.fid}</p>
+          <p className="text-sm text-white">🎉 Signed in as {session.user?.fid}</p>
           <Button onClick={handleSignOut} disabled={signingOut}>
-            Sair
+            Sign out
           </Button>
         </>
       )}

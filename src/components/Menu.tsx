@@ -10,7 +10,7 @@ type Props = {
         <button
           onClick={() => hasGuild && onSelect("conquest")}
           disabled={!hasGuild}
-          title={!hasGuild ? "Entre em uma guilda para acessar" : undefined}
+          title={!hasGuild ? "Join a guild to access" : undefined}
           className={`text-lg font-medium transition-colors ${
             currentView === "conquest"
               ? "text-purple-400 underline underline-offset-4"
@@ -25,7 +25,7 @@ type Props = {
         <button
           onClick={() => hasGuild && onSelect("leaderboard")}
           disabled={!hasGuild}
-          title={!hasGuild ? "Entre em uma guilda para acessar" : undefined}
+          title={!hasGuild ? "Join a guild to access" : undefined}
           className={`text-lg font-medium transition-colors ${
             currentView === "leaderboard"
               ? "text-purple-400 underline underline-offset-4"

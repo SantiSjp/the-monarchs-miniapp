@@ -68,7 +68,7 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
         body: JSON.stringify({ wallet: address, fid, username }),
       });
     } catch (err) {
-      console.error("Erro ao registrar wallet com fid:", err);
+      console.error("Error registering wallet with fid:", err);
     }
   };
 
@@ -123,7 +123,7 @@ export default function MapModal({ open, onClose, id, name, fid }: Props) {
         }
       }
     } catch (err) {
-      console.error("Erro ao buscar dados do território ou saldo:", err);
+      console.error("Error fetching territory or balance data:", err);
     }
   };
 

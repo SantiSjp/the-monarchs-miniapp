@@ -51,7 +51,7 @@ export default function App() {
   }, [address]);
 
   if (status === "loading") {
-    return <div className="text-white text-center mt-10">Carregando...</div>;
+    return <div className="text-white text-center mt-10">Loading...</div>;
   }
 
   if (!session?.user?.fid) {

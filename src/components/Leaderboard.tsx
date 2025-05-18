@@ -50,10 +50,10 @@ export default function Leaderboard() {
 
             return { name, owner, stake };
           } catch (err) {
-            console.error(`Erro ao carregar dados do território ${name}:`, err);
+            console.error(`Error loading territory data ${name}:`, err);
             return {
               name,
-              owner: "Erro",
+              owner: "Error",
               stake: 0,
             };
           }
