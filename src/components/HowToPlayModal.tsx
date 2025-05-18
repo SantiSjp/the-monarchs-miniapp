@@ -15,7 +15,7 @@ const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
         >
           ×
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-purple-800">How to Play Pool War</h2>
+        <h2 className="text-2xl font-bold mb-4 text-purple-800">How to Play MONarchs</h2>
         <ol className="list-decimal list-inside text-gray-800 space-y-2 mb-4">
           <li>Connect your wallet and log in with Farcaster.</li>
           <li>Join a guild to participate in the game.</li>
