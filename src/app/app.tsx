@@ -12,6 +12,7 @@ import FarcasterLogin from "~/components/FarcasterLogin";
 import Menu from "~/components/Menu";
 import Leaderboard from "~/components/Leaderboard";
 import Guild from "~/components/Guild";
+import HowToPlayModal from "~/components/HowToPlayModal";
 
 // PoolWar precisa ser dynamic por causa do Frame SDK
 const PoolWar = dynamic(() => import("~/components/PoolWar"), {
@@ -23,6 +24,7 @@ export default function App() {
   const { data: session, status } = useSession();
   const { address } = useAccount();
   const [hasGuild, setHasGuild] = useState<boolean>(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   useEffect(() => {
     const checkGuild = async () => {
@@ -65,11 +67,18 @@ export default function App() {
 
   return (
     <div className="flex flex-col items-center gap-6">
+      <button
+        className="self-end mr-4 mt-4 px-4 py-2 bg-purple-700 text-white rounded hover:bg-purple-800 transition"
+        onClick={() => setShowHowTo(true)}
+      >
+        How to play?
+      </button>
       <Menu currentView={view} onSelect={setView} hasGuild={hasGuild} />
 
       {view === "conquest" && <PoolWar fid={session?.user?.fid || 0} />}
       {view === "leaderboard" && <Leaderboard />}
       {view === "guild" && <Guild onJoinGuild={() => setHasGuild(true)} />}
+      {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
     </div>
   );
 }

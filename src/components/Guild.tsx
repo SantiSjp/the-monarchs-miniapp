@@ -194,7 +194,7 @@ export default function Guild({ onJoinGuild }: { onJoinGuild?: () => void }) {
   return (
     loadingGuildCheck ? (
       <div className="flex items-center justify-center h-64">
-        <span className="text-purple-300 animate-pulse text-xl font-semibold">Carregando sua guilda...</span>
+        <span className="text-purple-300 animate-pulse text-xl font-semibold">Loading your guild...</span>
       </div>
     ) : (
       <div className="p-8 max-w-xl mx-auto text-white">
