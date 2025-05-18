@@ -214,6 +214,9 @@ export default function Guild({ onJoinGuild }: { onJoinGuild?: () => void }) {
       {mintError && (
         <p className="mt-4 text-center text-red-500 font-semibold">{mintError}</p>
       )}
+      {!joined && (
+        <p className="text-center text-zinc-300 mb-4">Click a guild to select and join!</p>
+      )}
       <div className="flex items-center justify-center gap-4">
         {!joined && (
           <button onClick={goLeft} className="p-2 text-purple-300 hover:text-purple-500">
@@ -233,7 +236,7 @@ export default function Guild({ onJoinGuild }: { onJoinGuild?: () => void }) {
               <img
                 src={guild.icon}
                 alt={guild.name}
-                className="w-15 h-25 mb-4 mx-auto rounded"
+                className="w-15 h-15 mb-4 mx-auto rounded"
               />
               <h2 className="text-xl font-semibold text-center mb-2">{guild.name}</h2>
               <p className="text-sm text-zinc-400 text-center">{guild.description}</p>
